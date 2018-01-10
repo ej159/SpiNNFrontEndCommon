@@ -75,10 +75,13 @@ class InsertEdgesToExtraMonitorFunctionality(object):
         """
         placement = placements.get_placement_of_vertex(vertex)
         chip = machine.get_chip_at(placement.x, placement.y)
-        ethernet_connected_chip = machine.get_chip_at(
-            chip.nearest_ethernet_x, chip.nearest_ethernet_y)
+        eth_x = chip.nearest_ethernet_x
+        eth_y = chip.nearest_ethernet_y
+        if (eth_x, eth_y) not in vertex_to_ethernet_connected_chip_mapping:
+            eth_x = 0
+            eth_y = 0
         data_gatherer_vertex = vertex_to_ethernet_connected_chip_mapping[
-            ethernet_connected_chip.x, ethernet_connected_chip.y]
+            eth_x, eth_y]
 
         # locate if a edge is already built
         already_built = self._has_edge_already(
