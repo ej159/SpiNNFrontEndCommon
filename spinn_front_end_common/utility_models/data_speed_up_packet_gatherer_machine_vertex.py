@@ -310,7 +310,7 @@ class DataSpeedUpPacketGatherMachineVertex(
                 length_in_bytes].append((end - start, [0]))
             return data
 
-        data = struct.pack(
+        request_data = struct.pack(
             "<III", self.SDP_PACKET_START_SENDING_COMMAND_ID,
             memory_address, length_in_bytes)
 
@@ -324,7 +324,7 @@ class DataSpeedUpPacketGatherMachineVertex(
                 destination_port=constants.
                 SDP_PORTS.EXTRA_MONITOR_CORE_DATA_SPEED_UP.value,
                 flags=SDPFlag.REPLY_NOT_EXPECTED),
-            data=data)
+            data=request_data)
 
         # send
         self._connection.send_sdp_message(message)
@@ -337,6 +337,7 @@ class DataSpeedUpPacketGatherMachineVertex(
         self._max_seq_num = self.calculate_max_seq_num()
 
         timeoutcount = 0
+        first_packet_received = False
         while not finished:
             try:
                 data = self._connection.receive(
@@ -345,6 +346,10 @@ class DataSpeedUpPacketGatherMachineVertex(
                 seq_nums, finished = self._process_data(
                     data, seq_nums, finished, placement, transceiver,
                     lost_seq_nums)
+
+                # Note that we have received at least one packet from the
+                # request
+                first_packet_received = True
             except SpinnmanTimeoutException:
                 if timeoutcount > TIMEOUT_RETRY_LIMIT:
                     raise exceptions.SpinnFrontEndException(
@@ -360,8 +365,19 @@ class DataSpeedUpPacketGatherMachineVertex(
                     local_port=local_port, remote_port=remote_port,
                     local_host=local_ip, remote_host=remote_ip)
                 if not finished:
-                    finished = self._determine_and_retransmit_missing_seq_nums(
-                        seq_nums, transceiver, placement, lost_seq_nums)
+
+                    # If we have received at least one packet,
+                    # send a request for missing sequence numbers
+                    if first_packet_received:
+                        finished = \
+                            self._determine_and_retransmit_missing_seq_nums(
+                                seq_nums, transceiver, placement,
+                                lost_seq_nums)
+
+                    # If we haven't received anything, our original message
+                    # has probably gone missing, so try again
+                    else:
+                        self._connection.send_sdp_message(message)
 
         end = float(time.time())
         self._provenance_data_items[
