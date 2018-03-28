@@ -66,7 +66,7 @@ class SpallocAllocator(object):
     """
 
     # Use a worst case calculation
-    _N_CHIPS_PER_BOARD = 48.0
+    _N_CHIPS_PER_BOARD = 47.0
     _MACHINE_VERSION = 5
 
     def __call__(
