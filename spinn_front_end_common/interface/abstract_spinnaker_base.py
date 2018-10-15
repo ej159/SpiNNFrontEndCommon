@@ -25,7 +25,6 @@ from spinn_front_end_common.abstract_models import \
     AbstractVertexWithEdgeToDependentVertices, AbstractChangableAfterRun
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_utilities.log import FormatAdapter
-from spinn_front_end_common.utility_models import CommandSenderMachineVertex
 from spinn_front_end_common.utilities \
     import helpful_functions, globals_variables, SimulatorInterface
 from spinn_front_end_common.utilities import function_list
@@ -33,7 +32,8 @@ from spinn_front_end_common.utilities.utility_objs \
     import ExecutableType, ProvenanceDataItem
 from spinn_front_end_common.utilities.report_functions import EnergyReport
 from spinn_front_end_common.utility_models import \
-    CommandSender, DataSpeedUpPacketGatherMachineVertex
+    CommandSender, DataSpeedUpPacketGatherMachineVertex, \
+    CommandSenderMachineVertex
 from spinn_front_end_common.interface.buffer_management.buffer_models \
     import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.provenance \
@@ -1044,6 +1044,7 @@ class AbstractSpinnakerBase(SimulatorInterface):
         return False
 
     def _add_commands_to_command_sender(self):
+        # locate correct graph to put the command sender if required
         vertices = self._application_graph.vertices
         graph = self._application_graph
         command_sender_vertex = CommandSender
@@ -1051,6 +1052,8 @@ class AbstractSpinnakerBase(SimulatorInterface):
             vertices = self._machine_graph.vertices
             graph = self._machine_graph
             command_sender_vertex = CommandSenderMachineVertex
+
+        # check vertices in graph for if they need a command sender
         for vertex in vertices:
             if isinstance(vertex, AbstractSendMeMulticastCommandsVertex):
                 # if there's no command sender yet, build one
