@@ -177,7 +177,7 @@ class SqlLiteDatabase(AbstractDatabase):
         existing_len = 0
         have_extra = False
         for row in cursor.execute(
-                "SELECT length(content) AS len, have_extra FROM region "
+                "SELECT length(hex(content))/2 AS len, have_extra FROM region "
                 + "WHERE region_id = ? LIMIT 1",
                 (region_id, )):
             existing_len = row["len"]
@@ -189,7 +189,7 @@ class SqlLiteDatabase(AbstractDatabase):
 
     def _get_extra_row_id(self, cursor, region_id, chunk_len):
         for row in cursor.execute(
-                "SELECT length(content) AS len, extra_id "
+                "SELECT length(hex(content))/2 AS len, extra_id "
                 + "FROM region_extra "
                 + "WHERE region_id = ? "
                 + "ORDER BY extra_id DESC LIMIT 1",
